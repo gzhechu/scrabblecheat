@@ -33,7 +33,7 @@ $(document).ready(function () {
 function newMessage(form) {
     var message = form.formToDict();
     updater.socket.send(JSON.stringify(message));
-    form.find("input[type=text]").val("").select();
+    // form.find("input[type=text]").val("").select();
 }
 
 jQuery.fn.formToDict = function () {

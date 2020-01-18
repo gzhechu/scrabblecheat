@@ -53,7 +53,7 @@ def load(words, filepath, src=None):
                 words[word]["source"].add(src)
             else:
                 words[word] = wd
-            print("{} {}".format(n, wd))
+            # print("{} {}".format(n, wd))
             line = fp.readline().strip()
             n += 1
     return words
@@ -76,8 +76,8 @@ vocabularys = {}
 
 def init(t, v):
     load(v, "dict/pet2020.txt", "pet")
-    # load(v, "dict/TWL06.txt", "twl")
-    load(v, "dict/hello.txt", "hello")
+    load(v, "dict/TWL06.txt", "twl")
+    # load(v, "dict/hello.txt", "hello")
     print(len(v))
     print(v["hello"])
 
@@ -96,7 +96,7 @@ def init(t, v):
 def search(trie, base, vocabulary):
     # start = time.process_time()
     segs = segment(base)
-    # print(len(segs))
+    print(len(segs))
     # print(segs)
     words = []
     for seg in segs:
@@ -174,14 +174,13 @@ class CheatSocketHandler(tornado.websocket.WebSocketHandler):
         self.send_words(chat)
         wl = search(trie_obj, base, vocabularys)
         for w in wl:
-            logging.info("word: {}".format(w))
+            # logging.info("word: {}".format(w))
             chat = {"id": str(uuid.uuid4()),
                     "word": w['word'], "abbr": w["abbr"], "desc": w["desc"], "src": repr(w['source'])}
-            logging.info("send message: {}".format(chat))
             chat["html"] = tornado.escape.to_basestring(
                 self.render_string("message.html", message=chat)
             )
-            logging.info("chat['html']: {}".format(chat["html"]))
+            # logging.info("send message: {}".format(chat))
             self.send_words(chat)
 
 

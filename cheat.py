@@ -5,6 +5,10 @@
 Created on Mon Jan 13 16:09:50 2020
 
 @author: hechu
+
+# some word list:
+# https://github.com/mahavivo/english-wordlists
+
 """
 
 import logging
@@ -33,14 +37,14 @@ def load(words, filepath, src=None):
                 word = wl[0].lower()
             except IndexError:
                 pass
-            try:
-                abbr = wl[1]
-            except IndexError:
-                pass
-            try:
-                desc = wl[2]
-            except IndexError:
-                pass
+            # try:
+            #     abbr = wl[1]
+            # except IndexError:
+            #     pass
+            # try:
+            #     desc = wl[2]
+            # except IndexError:
+            #     pass
             wd = {}
             wd["word"] = word
             wd["abbr"] = abbr
@@ -75,8 +79,11 @@ vocabularys = {}
 
 
 def init(t, v):
+    load(v, "dict/high_school.txt", "高中")
     load(v, "dict/pet2020.txt", "pet")
-    load(v, "dict/TWL06.txt", "twl")
+    load(v, "dict/cet4.txt", "cet4")
+    load(v, "dict/cet6.txt", "cet6")
+    # load(v, "dict/TWL06.txt", "twl")
     # load(v, "dict/hello.txt", "hello")
     print(len(v))
     print(v["hello"])
@@ -122,7 +129,8 @@ class Application(tornado.web.Application):
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         # self.render("index.html", messages=CheatSocketHandler.cache)
-        self.render("index.html", messages=[])
+        self.render("d.html", messages=[])
+        # self.render("index.html", messages=[])
 
 
 class CheatSocketHandler(tornado.websocket.WebSocketHandler):
@@ -155,33 +163,50 @@ class CheatSocketHandler(tornado.websocket.WebSocketHandler):
             except:
                 logging.error("Error sending message", exc_info=True)
 
-    def send_words(self, chat):
-        self.write_message(chat)
+    # def send_words(self, chat):
+    #     self.write_message(chat)
 
     def on_message(self, message):
+        prefix = ""
+        contains = ""
+        postfix = ""
+
         logging.info("got message %r", message)
         parsed = tornado.escape.json_decode(message)
         base = parsed["body"]
+        prefix = parsed["prefix"]
+        contains = parsed["contains"]
+        postfix = parsed["postfix"]
+
         if base == "":
             return
 
-        logging.info("got message: {}".format(base))
-        chat = {"id": "clear", "word": base, "abbr": "", "desc": "", "src": ""}
-        chat["html"] = tornado.escape.to_basestring(
-            self.render_string("message.html", message=chat)
-        )
-        # logging.info("chat['html']: {}".format(chat["html"]))
-        self.send_words(chat)
+        if len(base) > 9:
+            return
+
+        # logging.info("got message: {}".format(base))
+        resp = {"id": "clear", "word": base, "abbr": "", "desc": "", "src": ""}
+        resp["html"] = ""
+        self.write_message(resp)
+
         wl = search(trie_obj, base, vocabularys)
         for w in wl:
             # logging.info("word: {}".format(w))
-            chat = {"id": str(uuid.uuid4()),
+            if not contains in w['word']:
+                continue
+
+            if not w['word'].startswith(prefix):
+                continue
+
+            if not w['word'].endswith(postfix):
+                continue
+
+            resp = {"id": str(uuid.uuid4()),
                     "word": w['word'], "abbr": w["abbr"], "desc": w["desc"], "src": repr(w['source'])}
-            chat["html"] = tornado.escape.to_basestring(
-                self.render_string("message.html", message=chat)
+            resp["html"] = tornado.escape.to_basestring(
+                self.render_string("message.html", message=resp)
             )
-            # logging.info("send message: {}".format(chat))
-            self.send_words(chat)
+            self.write_message(resp)
 
 
 define("port", default=8888, help="run on the given port", type=int)
@@ -203,6 +228,7 @@ def test1():
 def main():
     init(trie_obj, vocabularys)
     tornado.options.parse_command_line()
+    print("listening on port: {}".format(options.port))
     app = Application()
     app.listen(options.port)
     tornado.ioloop.IOLoop.current().start()

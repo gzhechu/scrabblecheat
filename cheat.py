@@ -3,11 +3,13 @@
 
 """
 Created on Mon Jan 13 16:09:50 2020
-
 @author: hechu
 
 # some word list:
 # https://github.com/mahavivo/english-wordlists
+
+# score table from:
+# https://zh.wikipedia.org/wiki/Scrabble
 
 """
 
@@ -21,97 +23,141 @@ import os.path
 import uuid
 from tornado.options import define, options
 import time
+import re
 from itertools import permutations
 
 from trie import Trie
 
 
-def load(words, filepath, src=None):
-    n = 1
-    with open(filepath) as fp:
-        line = fp.readline().strip()
-        while line:
-            wl = line.split("\t")
-            word = abbr = desc = ""
+class Word():
+    score_table = {'e': 1, 's': 1, 'a': 1, 'i': 1, 'r': 1, 'o': 1,
+                   'n': 1, 't': 1, 'l': 1, 'd': 2, 'u': 1, 'c': 3,
+                   'g': 2, 'p': 3, 'm': 3, 'h': 4, 'b': 3, 'y': 4,
+                   'k': 5, 'f': 4, 'w': 4, 'v': 4, 'z': 10, 'x': 8,
+                   'j': 8, 'q': 10}
+
+    def __init__(self, word, src=None):
+        self.word = word
+        self.score = 0
+        self._score()
+        self.source = set()
+        if src is not None:
+            self.source.add(src)
+        self.abbr = ""
+        self.desc = ""
+        pass
+
+    def _score(self):
+        self.score = 0
+        if self.word is None:
+            return
+        for c in self.word:
             try:
-                word = wl[0].lower()
+                self.score += self.score_table[c]
+                # print(c, self.score_table[c])
+            except KeyError:
+                pass
+
+
+class ScabblerCheat():
+    def __init__(self):
+        self.wordlist = {}
+        # Trie object
+        self.trie = Trie()
+        pass
+
+    def load(self, filepath, src=None):
+        new_words = []
+        with open(filepath) as fp:
+            line = fp.readline().strip()
+            while line:
+                wl = line.split("\t")
+                word = abbr = desc = ""
+                try:
+                    word = wl[0].lower()
+                except IndexError:
+                    pass
+
+                # try:
+                #     abbr = wl[1]
+                # except IndexError:
+                #     pass
+                # try:
+                #     desc = wl[2]
+                # except IndexError:
+                #     pass
+
+                wd = Word(word, src)
+                if word in self.wordlist:
+                    self.wordlist[word].source.add(src)
+                else:
+                    self.wordlist[word] = wd
+                    new_words.append(word)
+
+                # print("{} {}".format(n, wd))
+                line = fp.readline().strip()
+
+        for word in new_words:
+            # print(word)
+            try:
+                self.trie.insert(word)
             except IndexError:
                 pass
-            # try:
-            #     abbr = wl[1]
-            # except IndexError:
-            #     pass
-            # try:
-            #     desc = wl[2]
-            # except IndexError:
-            #     pass
-            wd = {}
-            wd["word"] = word
-            wd["abbr"] = abbr
-            wd["desc"] = desc
-            wd["source"] = set()
-            if src is not None:
-                wd["source"].add(src)
+        print("load {} new {} words from file".format(len(new_words), src))
 
-            if word in words:
-                words[word]["source"].add(src)
-            else:
-                words[word] = wd
-            # print("{} {}".format(n, wd))
-            line = fp.readline().strip()
-            n += 1
-    return words
+    def combinations(self, lstr, prefix="", contains="", postfix=""):
+        base = lstr.lower()
+        seg = []
+        for i in range(2, len(base) + 1):
+            # use Set to ensure uniq word in the possible solve.
+            slist = set(map("".join, permutations(base, r=i)))
 
+            # print("len of posible 1 is {}".format(len(slist)))
+            # regex = re.compile(r"a{3}")
+            # slist = list(filter(regex.search, slist))
+            # print("len of posible 2 is {}".format(len(slist)))
+            # print(slist)
 
-def segment(lstr):
-    base = lstr.lower()
-    seg = []
-    for i in range(2, len(base) + 1):
-        s = set(map("".join, permutations(base, r=i)))
-        for w in s:
-            seg.append(w)
-    return seg
+            # regex = re.compile(r"{0}".format(contains))
+            # slist = list(filter(regex.search, slist))
+            # seg.extend(slist)
 
+            for word in slist:
+                # print(len(word))
+                # print(word)
+                if not contains in word:
+                    continue
+                if not word.startswith(prefix):
+                    continue
+                if not word.endswith(postfix):
+                    continue
+                seg.append(word)
+        return seg
 
-# Trie object
-trie_obj = Trie()
-vocabularys = {}
+    def search(self, lstr, prefix="", contains="", postfix=""):
+        if (len(lstr) > 8):
+            return []
 
+        print("[{}], [{}], [{}], [{}]".format(lstr, prefix, contains, postfix))
+        lstr += prefix
+        lstr += contains
+        lstr += postfix
+        print("{} letters: {}".format(len(lstr), list(lstr)))
 
-def init(t, v):
-    load(v, "dict/high_school.txt", "高中")
-    load(v, "dict/pet2020.txt", "pet")
-    load(v, "dict/cet4.txt", "cet4")
-    load(v, "dict/cet6.txt", "cet6")
-    # load(v, "dict/TWL06.txt", "twl")
-    # load(v, "dict/hello.txt", "hello")
-    print(len(v))
-    print(v["hello"])
+        if len(lstr) > 10:
+            return []
 
-    words = []
-    for key in vocabularys.keys():
-        words.append(key)
-
-    for word in words:
-        # print(word)
-        try:
-            t.insert(word)
-        except IndexError:
-            pass
-
-
-def search(trie, base, vocabulary):
-    # start = time.process_time()
-    segs = segment(base)
-    print(len(segs))
-    # print(segs)
-    words = []
-    for seg in segs:
-        if (trie.search(seg)):
-            w = vocabulary[seg]
-            words.append(w)
-    # print("time consuming: {}s".format(time.process_time() - start))
-    return words
+        combines = self.combinations(lstr, prefix.lower(),
+                                     contains.lower(), postfix.lower())
+        print("search from {} possible solve.".format(len(combines)))
+        words = []
+        for word in combines:
+            if (self.trie.search(word)):
+                w = self.wordlist[word]
+                words.append(w)
+        # print("time consuming: {}s".format(time.process_time() - start))
+        return sorted(words, key=lambda w: w.score, reverse=True)
+        # return words
 
 
 class Application(tornado.web.Application):
@@ -135,8 +181,6 @@ class MainHandler(tornado.web.RequestHandler):
 
 class CheatSocketHandler(tornado.websocket.WebSocketHandler):
     waiters = set()
-    # cache = []
-    # cache_size = 200
 
     def get_compression_options(self):
         # Non-None enables compression with default options.
@@ -148,61 +192,44 @@ class CheatSocketHandler(tornado.websocket.WebSocketHandler):
     def on_close(self):
         CheatSocketHandler.waiters.remove(self)
 
-    @classmethod
-    def update_cache(cls, chat):
-        cls.cache.append(chat)
-        if len(cls.cache) > cls.cache_size:
-            cls.cache = cls.cache[-cls.cache_size:]
-
-    @classmethod
-    def send_updates(cls, chat):
-        logging.info("sending message to %d waiters", len(cls.waiters))
-        for waiter in cls.waiters:
-            try:
-                waiter.write_message(chat)
-            except:
-                logging.error("Error sending message", exc_info=True)
-
-    # def send_words(self, chat):
-    #     self.write_message(chat)
-
     def on_message(self, message):
+        base = ""
         prefix = ""
         contains = ""
         postfix = ""
 
         logging.info("got message %r", message)
         parsed = tornado.escape.json_decode(message)
-        base = parsed["body"]
-        prefix = parsed["prefix"]
-        contains = parsed["contains"]
-        postfix = parsed["postfix"]
+        base = parsed["body"].strip().replace(" ", "")
+        prefix = parsed["prefix"].strip().replace(" ", "")
+        contains = parsed["contains"].strip().replace(" ", "")
+        postfix = parsed["postfix"].strip().replace(" ", "")
 
         if base == "":
             return
 
-        if len(base) > 9:
-            return
+        lstr = base + prefix
+        lstr += contains
+        lstr += postfix
 
-        # logging.info("got message: {}".format(base))
         resp = {"id": "clear", "word": base, "abbr": "", "desc": "", "src": ""}
         resp["html"] = ""
         self.write_message(resp)
 
-        wl = search(trie_obj, base, vocabularys)
+        if len(base) > 8 or len(lstr) > 10:
+            resp = {"id": str(uuid.uuid4()), "word": "字母太多啦，算不过来啦！",
+                    "abbr": "", "desc": "", "src": "", "score": "负分!"}
+            resp["html"] = tornado.escape.to_basestring(
+                self.render_string("message.html", message=resp)
+            )
+            self.write_message(resp)
+            return
+
+        wl = sc.search(base, prefix, contains, postfix)
         for w in wl:
             # logging.info("word: {}".format(w))
-            if not contains in w['word']:
-                continue
-
-            if not w['word'].startswith(prefix):
-                continue
-
-            if not w['word'].endswith(postfix):
-                continue
-
-            resp = {"id": str(uuid.uuid4()),
-                    "word": w['word'], "abbr": w["abbr"], "desc": w["desc"], "src": repr(w['source'])}
+            resp = {"id": str(uuid.uuid4()), "word": w.word, "score": str(w.score),
+                    "abbr": w.abbr, "desc": w.desc, "src": repr(w.source).replace("'", "")}
             resp["html"] = tornado.escape.to_basestring(
                 self.render_string("message.html", message=resp)
             )
@@ -211,22 +238,45 @@ class CheatSocketHandler(tornado.websocket.WebSocketHandler):
 
 define("port", default=8888, help="run on the given port", type=int)
 
+sc = ScabblerCheat()
 
-def test2():
-    init(trie_obj, vocabularys)
-    wl = search(trie_obj, "ABCDEFG", vocabulary)
-    for w in wl:
-        print(w)
-    pass
+
+def init():
+    w = Word("hello")
+    tstart = time.process_time()
+    sc.load("dict/high_school.txt", "高中")
+    sc.load("dict/pet2020.txt", "pet")
+    sc.load("dict/cet4.txt", "cet4")
+    sc.load("dict/cet6.txt", "cet6")
+    tend = time.process_time()
+    print("time consuming: {}s".format(tend - tstart))
 
 
 def test1():
-    base = 'absiifg'
-    print(len(segment(base)))
+    init()
+
+    # lstr = "abceeftd"
+    lstr = "abceeft"
+
+    # tstart = time.process_time()
+    # wl = sc.search(lstr)
+    # tend = time.process_time()
+    # for w in wl:
+    #     # print(w.word, w.source, w.score)
+    #     pass
+    # print("time consuming: {}s".format(tend - tstart))
+
+    tstart = time.process_time()
+    wl = sc.search(lstr, "", "e", "st")
+    tend = time.process_time()
+    for w in wl:
+        print(w.word, w.source, w.score)
+        pass
+    print("time consuming: {}s".format(tend - tstart))
 
 
 def main():
-    init(trie_obj, vocabularys)
+    init()
     tornado.options.parse_command_line()
     print("listening on port: {}".format(options.port))
     app = Application()
@@ -237,4 +287,3 @@ def main():
 if __name__ == '__main__':
     main()
     # test1()
-    # test2()

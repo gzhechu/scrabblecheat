@@ -244,7 +244,7 @@ class CheatSocketHandler(tornado.websocket.WebSocketHandler):
                 self.render_string("message.html", message=resp)
             )
             self.write_message(resp)
-
+        logging.info("send {} words in response".format(len(wl)))
 
 define("port", default=8123, help="run on the given port", type=int)
 

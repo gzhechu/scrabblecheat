@@ -1,7 +1,7 @@
 # Scrabble Cheat
 
 A simple Scrabble cheat program.
-
+g
 Scrabble: https://en.wikipedia.org/wiki/Scrabble
 
 English:
@@ -11,3 +11,13 @@ When I played Scrabble with my daughter, I found that there was no good cheat/as
 Chinese:
 
 最近在和女儿玩Scrabble，但是女儿的iPad却没有好用的作弊（辅助）工具软件，所以自己用Python做了一个简单的WEB版本，这样她通过浏览器就可以玩了。
+
+Requirement:
+
+sudo apt install python3-tornado               
+
+
+Download:
+
+git clone https://github.com/gzhechu/scrabblecheat.git --depth=1
+

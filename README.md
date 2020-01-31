@@ -27,3 +27,7 @@ You shoud set your system locales to UTF-8 to avoid the decode problem when load
 
 	export LC_ALL="en_US.UTF-8"
 	export LC_CTYPE="en_US.UTF-8"
+
+User Interface:
+
+![user interface](./static/ui.png  "UI")

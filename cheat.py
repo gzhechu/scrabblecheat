@@ -244,7 +244,14 @@ class CheatSocketHandler(tornado.websocket.WebSocketHandler):
                 self.render_string("message.html", message=resp)
             )
             self.write_message(resp)
-        logging.info("send {} words in response".format(len(wl)))
+        logging.info("send {} words in response".format(len(wl)))       
+        if len(wl) <= 0:
+            resp = {"id": str(uuid.uuid4()), "word": "木有找到合适的单词…",
+                    "abbr": "", "desc": "", "src": "", "score": "负分!"}
+            resp["html"] = tornado.escape.to_basestring(
+                self.render_string("message.html", message=resp)
+            )
+            self.write_message(resp)
 
 define("port", default=8123, help="run on the given port", type=int)
 

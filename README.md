@@ -1,7 +1,7 @@
 # Scrabble Cheat
 
 A simple Scrabble cheat program.
-g
+
 Scrabble: https://en.wikipedia.org/wiki/Scrabble
 
 English:
@@ -14,10 +14,16 @@ Chinese:
 
 Requirement:
 
-sudo apt install python3-tornado               
+	sudo apt install python3-tornado
 
 
 Download:
 
-git clone https://github.com/gzhechu/scrabblecheat.git --depth=1
+	git clone https://github.com/gzhechu/scrabblecheat.git --depth=1
 
+Issues:
+
+You shoud set your system locales to UTF-8 to avoid the decode problem when load word list.
+
+	export LC_ALL="en_US.UTF-8"
+	export LC_CTYPE="en_US.UTF-8"

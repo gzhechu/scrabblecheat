@@ -23,7 +23,7 @@ Download:
 
 Issues:
 
-You shoud set your system locales to UTF-8 to avoid the decode problem when load word list.
+You shoud set your system locales to UTF-8 to avoid the decode problem when load word list. For example: 
 
 	export LC_ALL="en_US.UTF-8"
 	export LC_CTYPE="en_US.UTF-8"

@@ -226,7 +226,7 @@ class CheatSocketHandler(tornado.websocket.WebSocketHandler):
         resp["html"] = ""
         self.write_message(resp)
 
-        if len(base) > 8 or len(lstr) > 10:
+        if len(base) > 7 or len(lstr) > 9:
             resp = {"id": str(uuid.uuid4()), "word": "字母太多啦，算不过来啦！",
                     "abbr": "", "desc": "", "src": "", "score": "负分!"}
             resp["html"] = tornado.escape.to_basestring(
@@ -254,9 +254,9 @@ sc = ScabblerCheat()
 def init():
     tstart = time.process_time()
     sc.load("dict/high_school.txt", "高中")
-    sc.load("dict/pet2020.txt", "pet")
-    sc.load("dict/cet4.txt", "cet4")
-    sc.load("dict/cet6.txt", "cet6")
+    sc.load("dict/pet2020.txt", "PET")
+    sc.load("dict/cet4.txt", "CET4")
+    sc.load("dict/cet6.txt", "CET6")
     tend = time.process_time()
     print("time consuming: {}s".format(tend - tstart))
 

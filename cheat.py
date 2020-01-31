@@ -13,15 +13,17 @@ Created on Mon Jan 13 16:09:50 2020
 
 """
 
-import logging
 import tornado.escape
 import tornado.ioloop
 import tornado.options
 import tornado.web
 import tornado.websocket
+from tornado.options import define, options
+
+import zipfile
+import logging
 import os.path
 import uuid
-from tornado.options import define, options
 import time
 import re
 from itertools import permutations
@@ -67,6 +69,13 @@ class ScabblerCheat():
         pass
 
     def load(self, filepath, src=None):
+        if not os.path.exists(filepath):
+            zipedfile = filepath + ".zip"
+            zipfolder = "./dict/" # fix it later.
+            print("unzip file: {}".format(zipedfile))
+            with zipfile.ZipFile(zipedfile, 'r') as zip_ref:
+                zip_ref.extractall(zipfolder)
+
         new_words = []
         with open(filepath) as fp:
             line = fp.readline().strip()
@@ -138,18 +147,18 @@ class ScabblerCheat():
         if (len(lstr) > 8):
             return []
 
-        print("[{}], [{}], [{}], [{}]".format(lstr, prefix, contains, postfix))
+        # print("[{}], [{}], [{}], [{}]".format(lstr, prefix, contains, postfix))
         lstr += prefix
         lstr += contains
         lstr += postfix
-        print("{} letters: {}".format(len(lstr), list(lstr)))
+        # print("{} letters: {}".format(len(lstr), list(lstr)))
 
         if len(lstr) > 10:
             return []
 
         combines = self.combinations(lstr, prefix.lower(),
                                      contains.lower(), postfix.lower())
-        print("search from {} possible solve.".format(len(combines)))
+        # print("search from {} possible solve.".format(len(combines)))
         words = []
         for word in combines:
             if (self.trie.search(word)):
@@ -175,8 +184,9 @@ class Application(tornado.web.Application):
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         # self.render("index.html", messages=CheatSocketHandler.cache)
-        self.render("d.html", messages=[])
+        self.render("index.html", messages=[])
         # self.render("index.html", messages=[])
+        # logging.info("request from: {}".format(self.request.remote_ip))
 
 
 class CheatSocketHandler(tornado.websocket.WebSocketHandler):
@@ -236,13 +246,12 @@ class CheatSocketHandler(tornado.websocket.WebSocketHandler):
             self.write_message(resp)
 
 
-define("port", default=8888, help="run on the given port", type=int)
+define("port", default=8123, help="run on the given port", type=int)
 
 sc = ScabblerCheat()
 
 
 def init():
-    w = Word("hello")
     tstart = time.process_time()
     sc.load("dict/high_school.txt", "高中")
     sc.load("dict/pet2020.txt", "pet")
@@ -272,13 +281,13 @@ def test1():
     for w in wl:
         print(w.word, w.source, w.score)
         pass
-    print("time consuming: {}s".format(tend - tstart))
+    logging.info("time consuming: {}s".format(tend - tstart))
 
 
 def main():
     init()
     tornado.options.parse_command_line()
-    print("listening on port: {}".format(options.port))
+    logging.info("listening on port: {}".format(options.port))
     app = Application()
     app.listen(options.port)
     tornado.ioloop.IOLoop.current().start()

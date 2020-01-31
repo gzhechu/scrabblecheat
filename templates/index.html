@@ -1,40 +1,81 @@
- <!DOCTYPE html>
- <html>
+<!DOCTYPE html>
+<html>
 
- <head>
-   <meta charset="UTF-8">
-   <title>Scrabble Cheat</title>
-   <link rel="stylesheet" href="{{ static_url("chat.css") }}" type="text/css">
+<head>
+  <meta charset="UTF-8">
+  <title>Scrabble Cheat</title>
 
-   <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js" type="text/javascript"></script>
-   <script src="{{ static_url("flexible.js") }}" type="text/javascript"></script>
-   <script src="{{ static_url("chat.js") }}" type="text/javascript"></script>
+  <script src="{{ static_url("jquery.min.js") }}" type="text/javascript"></script>
+  <script src="{{ static_url("flexible.js") }}" type="text/javascript"></script>
+  <script src="{{ static_url("chat.js") }}" type="text/javascript"></script>
+  <style>
+    #inbox {
+      font-size: 6vw;
+      font-family: sans-serif;
+      margin: 1vw;
+      height: 8vw;
+    }
 
- </head>
+    input {
+      font-size: 6vw;
+      margin: 1vw;
+      height: 8vw;
+    }
 
- <body>
-   <div id="body">
-     <div id="inbox">
-       {% for message in messages %}
-       {% include "message.html" %}
-       {% end %}
-     </div>
-     <div id="input">
-       <form action="#" method="post" id="messageform">
-         <table>
-           <tr>
-             <td><input type="text" name="body" id="message" style="width:500px;height:16px"></td>
-             <td style="padding-left:5px">
-               <input type="submit" value="{{ _("提交") }}">
-               <input type="hidden" name="next" value="{{ request.path }}">
-               {% module xsrf_form_html() %}
-             </td>
-           </tr>
-         </table>
-       </form>
-     </div>
-   </div>
+    .condition,
+    .candidate {
+      display: flex;
+      align-items: left;
+    }
 
- </body>
+    .candidate input {
+      display: block;
+      width: 70%;
+    }
 
- </html>
+    .condition input {
+      display: block;
+      width: 30%;
+    }
+
+    #btn {
+      width: 30%;
+      height: 9vw;
+      line-height: 10vw;
+      background: green;
+      color: #fff;
+      text-align: center;
+      font-size: 5vw;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="body">
+    <div id="input">
+      <form action="#" method="post" id="messageform">
+        <div class="candidate">
+          <input type="text" name="body" id="message" placeholder="输入英文字母" >
+          <input id='btn' type="submit" value="{{ _("提交") }}">
+          <!-- <div id='btn' onClick="document.forms['messageform"].submit();'>提交</div> -->
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <!-- {% module xsrf_form_html() %} -->
+        </div>
+        <div class="condition">
+          <input type="text" name='prefix' placeholder="开头" />
+          <input type="text" name='contains' placeholder="包含"  />
+          <input type="text" name='postfix' placeholder="结尾"  />
+        </div>
+      </form>
+    </div>
+    <div id="inbox">
+      {% for message in messages %}
+      {% include "message.html" %}
+      {% end %}
+    </div>
+
+  </div>
+
+</body>
+
+</html>

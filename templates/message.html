@@ -1,2 +1,9 @@
-<div class="message" id="m{{ message["id"] }}">{% module linkify(message["word"]) %}
-    {% module linkify(message["score"]) %} {% module linkify(message["src"]) %}</div>
+<div class="message" style="width:100%" id="m{{ message["id"] }}">
+    <div style="float: left; width: 85%;">
+        {% module linkify(message["word"]) %}
+        {% module linkify(message["src"]) %} 
+    </div>
+    <div style="float: right; width: 15%; text-align: center;">
+        {% module linkify(message["score"]) %} 
+    </div>
+</div>

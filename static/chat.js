@@ -18,6 +18,7 @@ $(document).ready(function () {
 
     $("#messageform").on("submit", function () {
         newMessage($(this));
+        window.console.log($(this))
         return false;
     });
     $("#messageform").on("keypress", function (e) {
@@ -61,7 +62,7 @@ var updater = {
     showMessage: function (message) {
         var existing = $("#m" + message.id);
         if (existing.length > 0) return;
-        window.console.log(message)
+        // window.console.log(message)
         if (message.id == "clear") {
             $("#inbox").empty();
             return;

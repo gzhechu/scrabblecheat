@@ -228,7 +228,7 @@ class CheatSocketHandler(tornado.websocket.WebSocketHandler):
 
         if len(base) > 7 or len(lstr) > 9:
             resp = {"id": str(uuid.uuid4()), "word": "字母太多啦，算不过来啦！",
-                    "abbr": "", "desc": "", "src": "", "score": "负分!"}
+                    "abbr": "", "desc": "", "src": "", "score": ""}
             resp["html"] = tornado.escape.to_basestring(
                 self.render_string("message.html", message=resp)
             )
@@ -247,7 +247,7 @@ class CheatSocketHandler(tornado.websocket.WebSocketHandler):
         logging.info("send {} words in response".format(len(wl)))       
         if len(wl) <= 0:
             resp = {"id": str(uuid.uuid4()), "word": "木有找到合适的单词…",
-                    "abbr": "", "desc": "", "src": "", "score": "负分!"}
+                    "abbr": "", "desc": "", "src": "", "score": ""}
             resp["html"] = tornado.escape.to_basestring(
                 self.render_string("message.html", message=resp)
             )

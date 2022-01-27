@@ -71,7 +71,7 @@ class ScabblerCheat():
     def load(self, filepath, src=None):
         if not os.path.exists(filepath):
             zipedfile = filepath + ".zip"
-            zipfolder = "./dict/" # fix it later.
+            zipfolder = "./dict/"  # fix it later.
             print("unzip file: {}".format(zipedfile))
             with zipfile.ZipFile(zipedfile, 'r') as zip_ref:
                 zip_ref.extractall(zipfolder)
@@ -115,54 +115,37 @@ class ScabblerCheat():
         print("load {} new {} words from file".format(len(new_words), src))
 
     def combinations(self, lstr, prefix="", contains="", postfix=""):
-        base = lstr.lower()
         seg = []
-        for i in range(2, len(base) + 1):
+        for i in range(2, len(lstr) + 1):
             # use Set to ensure uniq word in the possible solve.
-            slist = set(map("".join, permutations(base, r=i)))
-
-            # print("len of posible 1 is {}".format(len(slist)))
-            # regex = re.compile(r"a{3}")
-            # slist = list(filter(regex.search, slist))
-            # print("len of posible 2 is {}".format(len(slist)))
-            # print(slist)
-
-            # regex = re.compile(r"{0}".format(contains))
-            # slist = list(filter(regex.search, slist))
-            # seg.extend(slist)
+            slist = set(map("".join, permutations(lstr, r=i)))
 
             for word in slist:
                 # print(len(word))
                 # print(word)
-                if not contains in word:
+                if contains != "" and not contains in word:
                     continue
-                if not word.startswith(prefix):
+                if prefix != "" and not word.startswith(prefix):
                     continue
-                if not word.endswith(postfix):
+                if postfix != "" and not word.endswith(postfix):
                     continue
                 seg.append(word)
         return seg
 
-    def search(self, lstr, prefix="", contains="", postfix=""):
-        if (len(lstr) > 8):
-            return []
+    def search(self, base, prefix="", contains="", postfix=""):
+        strs = (base + prefix + contains + postfix).lower()
+        lstr = "".join(set(list(strs)))  # letter string
 
-        # print("[{}], [{}], [{}], [{}]".format(lstr, prefix, contains, postfix))
-        lstr += prefix
-        lstr += contains
-        lstr += postfix
-        # print("{} letters: {}".format(len(lstr), list(lstr)))
+        if len(lstr) > 9:
+            return None
 
-        if len(lstr) > 10:
-            return []
-
-        combines = self.combinations(lstr, prefix.lower(),
-                                     contains.lower(), postfix.lower())
+        disorders = self.combinations(lstr, prefix.lower(),
+                                      contains.lower(), postfix.lower())
         # print("search from {} possible solve.".format(len(combines)))
         words = []
-        for word in combines:
-            if (self.trie.search(word)):
-                w = self.wordlist[word]
+        for d in disorders:
+            if (self.trie.search(d)):
+                w = self.wordlist[d]
                 words.append(w)
         # print("time consuming: {}s".format(time.process_time() - start))
         return sorted(words, key=lambda w: w.score, reverse=True)
@@ -218,15 +201,16 @@ class CheatSocketHandler(tornado.websocket.WebSocketHandler):
         if base == "":
             return
 
-        lstr = base + prefix
-        lstr += contains
-        lstr += postfix
+        # lstr = base + prefix
+        # lstr += contains
+        # lstr += postfix
 
         resp = {"id": "clear", "word": base, "abbr": "", "desc": "", "src": ""}
         resp["html"] = ""
         self.write_message(resp)
 
-        if len(base) > 7 or len(lstr) > 9:
+        wl = sc.search(base, prefix, contains, postfix)
+        if wl is None:
             resp = {"id": str(uuid.uuid4()), "word": "字母太多啦，算不过来啦！",
                     "abbr": "", "desc": "", "src": "", "score": ""}
             resp["html"] = tornado.escape.to_basestring(
@@ -234,8 +218,15 @@ class CheatSocketHandler(tornado.websocket.WebSocketHandler):
             )
             self.write_message(resp)
             return
+        if len(wl) <= 0:
+            resp = {"id": str(uuid.uuid4()), "word": "木有找到合适的单词…",
+                    "abbr": "", "desc": "", "src": "", "score": ""}
+            resp["html"] = tornado.escape.to_basestring(
+                self.render_string("message.html", message=resp)
+            )
+            self.write_message(resp)
+            return
 
-        wl = sc.search(base, prefix, contains, postfix)
         for w in wl:
             # logging.info("word: {}".format(w))
             resp = {"id": str(uuid.uuid4()), "word": w.word, "score": str(w.score),
@@ -244,14 +235,8 @@ class CheatSocketHandler(tornado.websocket.WebSocketHandler):
                 self.render_string("message.html", message=resp)
             )
             self.write_message(resp)
-        logging.info("send {} words in response".format(len(wl)))       
-        if len(wl) <= 0:
-            resp = {"id": str(uuid.uuid4()), "word": "木有找到合适的单词…",
-                    "abbr": "", "desc": "", "src": "", "score": ""}
-            resp["html"] = tornado.escape.to_basestring(
-                self.render_string("message.html", message=resp)
-            )
-            self.write_message(resp)
+        logging.info("send {} words in response".format(len(wl)))
+
 
 define("port", default=8123, help="run on the given port", type=int)
 

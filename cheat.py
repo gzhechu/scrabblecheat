@@ -25,19 +25,18 @@ import logging
 import os.path
 import uuid
 import time
-import re
 from itertools import permutations
 
 from trie import Trie
 
+score_table = {'e': 1, 's': 1, 'a': 1, 'i': 1, 'r': 1, 'o': 1,
+               'n': 1, 't': 1, 'l': 1, 'd': 2, 'u': 1, 'c': 3,
+               'g': 2, 'p': 3, 'm': 3, 'h': 4, 'b': 3, 'y': 4,
+               'k': 5, 'f': 4, 'w': 4, 'v': 4, 'z': 10, 'x': 8,
+               'j': 8, 'q': 10}
+
 
 class Word():
-    score_table = {'e': 1, 's': 1, 'a': 1, 'i': 1, 'r': 1, 'o': 1,
-                   'n': 1, 't': 1, 'l': 1, 'd': 2, 'u': 1, 'c': 3,
-                   'g': 2, 'p': 3, 'm': 3, 'h': 4, 'b': 3, 'y': 4,
-                   'k': 5, 'f': 4, 'w': 4, 'v': 4, 'z': 10, 'x': 8,
-                   'j': 8, 'q': 10}
-
     def __init__(self, word, src=None):
         self.word = word
         self.score = 0
@@ -55,7 +54,7 @@ class Word():
             return
         for c in self.word:
             try:
-                self.score += self.score_table[c]
+                self.score += score_table[c]
                 # print(c, self.score_table[c])
             except KeyError:
                 pass
@@ -134,14 +133,19 @@ class ScabblerCheat():
 
     def search(self, base, prefix="", contains="", postfix=""):
         strs = (base + prefix + contains + postfix).lower()
-        lstr = "".join(set(list(strs)))  # letter string
+        slst = []
+        for c in list(strs):
+            if c in score_table:
+                slst.append(c)
+        print(slst)
+        lstr = "".join(set(slst))  # letter string
 
         if len(lstr) > 9:
             return None
 
         disorders = self.combinations(lstr, prefix.lower(),
                                       contains.lower(), postfix.lower())
-        # print("search from {} possible solve.".format(len(combines)))
+        # print("search from {} possible solve.".format(len(disorders)))
         words = []
         for d in disorders:
             if (self.trie.search(d)):
@@ -200,10 +204,6 @@ class CheatSocketHandler(tornado.websocket.WebSocketHandler):
 
         if base == "":
             return
-
-        # lstr = base + prefix
-        # lstr += contains
-        # lstr += postfix
 
         resp = {"id": "clear", "word": base, "abbr": "", "desc": "", "src": ""}
         resp["html"] = ""
